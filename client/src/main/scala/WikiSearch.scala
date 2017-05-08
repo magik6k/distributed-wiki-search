@@ -1,22 +1,20 @@
 import eu.devtty.ipld.util.IPLDLink
-import eu.devtty.mboard.AppLauncher
 import io.scalajs.JSON
 
 import scala.scalajs.js
-import scala.scalajs.js.annotation.{JSExport, JSExportTopLevel}
+import scala.scalajs.js.annotation.ScalaJSDefined
 import scala.util.hashing.MurmurHash3
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.scalajs.js.JSConverters._
 
-@JSExportTopLevel("WikiSearch")
-object WikiSearch {
+@ScalaJSDefined
+class WikiSearch(dictCid: String) extends js.Object {
   js.Dynamic.global.search = (s: String) => this.search(s)
   implicit val ipfs = AppLauncher.ipfs
 
-  private val dict = ipfs.dag.get("zdpuAqN6LUsggXfSWDhAzmnLAkWFztsR1w1QhKr7mBp2wfBMK").map(_.value.asInstanceOf[js.Dictionary[IPLDLink]])
+  private val dict = ipfs.dag.get(dictCid).map(_.value.asInstanceOf[js.Dictionary[IPLDLink]])
 
-  @JSExport
   def search(rawSearch: String): js.Promise[js.Array[String]] = {
     val wordWeights = scala.collection.mutable.Map[String, Double]()
 
@@ -25,9 +23,6 @@ object WikiSearch {
       wordWeights(word) = oldWeight + weight
     }
 
-
-    //println(s"S:$rawSearch")
-
     val searchWords = rawSearch.toLowerCase.replaceAll("""_\(\)-,""", " ").split(" ")
     searchWords.foreach(word => addWeight(word, word.length.toDouble / rawSearch.length))
 
@@ -35,20 +30,15 @@ object WikiSearch {
 
     val queries = searchWords.map(dictGet).map(futures => futures.map {
       case (word, candidates) =>
-        //println(word + " candidates: " + candidates.length)
         candidates.map {
           case (weight, article) =>
-            //println("addart: " + article + " || W: " + wordWeights.getOrElse(word, 0d) * weight)
             val oldWeight = candidateArticles.getOrElse(article, 0d)
             candidateArticles(article) = oldWeight + wordWeights.getOrElse(word, 0d) * weight
             true
         }
     })
     Future.sequence(queries.toSeq).map { _ =>
-      //println("cands: " + candidateArticles.size)
       val articles = candidateArticles.toArray.sortBy { case (_, p) => p }.map { case (a, _) => a }
-      //println("alen: " + articles.length)
-      //println("Best: " + articles.last)
       articles.reverse.take(50).toJSArray //TODO: configurable
     }.toJSPromise
   }

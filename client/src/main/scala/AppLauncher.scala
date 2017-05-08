@@ -1,5 +1,3 @@
-package eu.devtty.mboard
-
 import eu.devtty.ipfs.api.IpfsApi
 import org.scalajs.dom.window.location
 
@@ -12,8 +10,7 @@ object AppLauncher extends JSApp {
   val ipfs = new IpfsApi(location.hostname, port)
 
   def main(): Unit = {
-    println("wiki-search")
-
     js.Dynamic.global.ipfs = ipfs.asInstanceOf[js.Any]
+    js.Dynamic.global.WikiSearch = js.constructorOf[WikiSearch]
   }
 }

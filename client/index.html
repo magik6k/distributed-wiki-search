@@ -38,25 +38,29 @@
 
         <script src="./root-fastopt-bundle.js"></script>
         <script type="application/javascript">
-            var wikiHash = 'QmdNApTosXNKPbGeHKdqznY3Jjp4TK8h89tzmFH8F9fPxq'
+            (function(){
+                var wikiHash = 'QmdNApTosXNKPbGeHKdqznY3Jjp4TK8h89tzmFH8F9fPxq'
+                var indexCid = 'zdpuAqN6LUsggXfSWDhAzmnLAkWFztsR1w1QhKr7mBp2wfBMK'
+                var wikiSearch = new WikiSearch(indexCid)
 
-            document.getElementById('search-btn').onclick = function() {
-                search(document.getElementById('search-input').value).then(function(results) {
-                    var proto = document.getElementById('entry-proto').children[0]
-                    var resultsElem = document.getElementById("results")
-                    while(resultsElem.firstChild) resultsElem.removeChild(resultsElem.firstChild)
+                document.getElementById('search-btn').onclick = function() {
+                    wikiSearch.search(document.getElementById('search-input').value).then(function(results) {
+                        var proto = document.getElementById('entry-proto').children[0]
+                        var resultsElem = document.getElementById("results")
+                        while(resultsElem.firstChild) resultsElem.removeChild(resultsElem.firstChild)
 
-                    results.forEach(function(art, idx) {
-                        var entry = proto.cloneNode(true)
-                        entry.getElementsByClassName('entry-id')[0].appendChild(document.createTextNode(idx))
-                        var link = entry.getElementsByClassName('entry-link')[0]
-                        link.appendChild(document.createTextNode(art.replace(/_/g, " ").slice(0, -5)))
-                        link.href = '/ipfs/' + wikiHash + '/wiki/' + art
+                        results.forEach(function(art, idx) {
+                            var entry = proto.cloneNode(true)
+                            entry.getElementsByClassName('entry-id')[0].appendChild(document.createTextNode(idx))
+                            var link = entry.getElementsByClassName('entry-link')[0]
+                            link.appendChild(document.createTextNode(art.replace(/_/g, " ").slice(0, -5)))
+                            link.href = '/ipfs/' + wikiHash + '/wiki/' + art
 
-                        resultsElem.appendChild(entry)
+                            resultsElem.appendChild(entry)
+                        })
                     })
-                })
-            }
+                }
+            })()
         </script>
     </body>
 </html>
