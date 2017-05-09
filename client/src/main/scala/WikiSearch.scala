@@ -1,3 +1,4 @@
+import eu.devtty.ipfs.IpfsNode
 import eu.devtty.ipld.util.IPLDLink
 import io.scalajs.JSON
 
@@ -11,7 +12,7 @@ import scala.scalajs.js.JSConverters._
 @ScalaJSDefined
 class WikiSearch(dictCid: String) extends js.Object {
   js.Dynamic.global.search = (s: String) => this.search(s)
-  implicit val ipfs = AppLauncher.ipfs
+  implicit val ipfs: IpfsNode = AppLauncher.ipfs
 
   private val dict = ipfs.dag.get(dictCid).map(_.value.asInstanceOf[js.Dictionary[IPLDLink]])
 
