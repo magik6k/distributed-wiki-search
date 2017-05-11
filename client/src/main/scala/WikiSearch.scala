@@ -2,6 +2,7 @@ import eu.devtty.ipfs.IpfsNode
 import eu.devtty.ipld.util.IPLDLink
 import io.scalajs.JSON
 
+import scala.collection.mutable
 import scala.scalajs.js
 import scala.scalajs.js.annotation.ScalaJSDefined
 import scala.util.hashing.MurmurHash3
@@ -11,37 +12,54 @@ import scala.scalajs.js.JSConverters._
 
 @ScalaJSDefined
 class WikiSearch(dictCid: String) extends js.Object {
-  js.Dynamic.global.search = (s: String) => this.search(s)
   implicit val ipfs: IpfsNode = AppLauncher.ipfs
 
   private val dict = ipfs.dag.get(dictCid).map(_.value.asInstanceOf[js.Dictionary[IPLDLink]])
 
   def search(rawSearch: String): js.Promise[js.Array[String]] = {
-    val wordWeights = scala.collection.mutable.Map[String, Double]()
+    val searchWords = toWords(rawSearch)
+    val wordWeights = getWordWeights(searchWords)
+
+    val candidateArticles = mutable.Map[String, (Double, mutable.HashSet[String])]()
+
+    val queries = searchWords.map(dictGet).map(futures => futures.map {
+      case (word, candidates) =>
+        candidates.map {
+          case (weight, article) =>
+            val (oldWeight, words) = candidateArticles.getOrElse(article, (0d, mutable.HashSet[String]()))
+            candidateArticles(article) = (oldWeight + wordWeights.getOrElse(word, 0d) * weight, words += word)
+            true
+        }
+    })
+
+    Future.sequence(queries.toSeq).map { _ =>
+      //apply penalty for not containing words searched for
+      val candidates = candidateArticles.map {
+        case (article, (relevance, words)) =>
+          val nonMatchingWords = searchWords.filterNot(words.contains).map(wordWeights.apply).map(1 - _).product
+          (article, relevance * nonMatchingWords)
+      }
+
+      val articles = candidates.toArray.sortBy { case (_, p) => p }.map { case (a, _) => a }
+      articles.reverse.take(50).toJSArray //TODO: configurable
+    }.toJSPromise
+  }
+
+  private def getWordWeights(words: Array[String]): mutable.Map[String, Double] = {
+    val wordWeights = mutable.Map[String, Double]()
+    val len = words.map(_.length).sum
 
     def addWeight(word: String, weight: Double): Unit = {
       val oldWeight = wordWeights.getOrElse(word, 0d)
       wordWeights(word) = oldWeight + weight
     }
 
-    val searchWords = rawSearch.toLowerCase.replaceAll("""_\(\)-,""", " ").split(" ")
-    searchWords.foreach(word => addWeight(word, word.length.toDouble / rawSearch.length))
+    words.foreach(word => addWeight(word, word.length.toDouble / len))
+    wordWeights
+  }
 
-    val candidateArticles = scala.collection.mutable.Map[String, Double]()
-
-    val queries = searchWords.map(dictGet).map(futures => futures.map {
-      case (word, candidates) =>
-        candidates.map {
-          case (weight, article) =>
-            val oldWeight = candidateArticles.getOrElse(article, 0d)
-            candidateArticles(article) = oldWeight + wordWeights.getOrElse(word, 0d) * weight
-            true
-        }
-    })
-    Future.sequence(queries.toSeq).map { _ =>
-      val articles = candidateArticles.toArray.sortBy { case (_, p) => p }.map { case (a, _) => a }
-      articles.reverse.take(50).toJSArray //TODO: configurable
-    }.toJSPromise
+  private def toWords(query: String): Array[String] = {
+    query.toLowerCase.replaceAll("""_\(\)-,""", " ").split(" ")
   }
 
   private def dictGet(word: String): Future[(String, Array[(Double, String)])] = {

@@ -1,8 +1,10 @@
+#!/usr/bin/env bash
+
 echo "> Unpack/prepare"
 
 mkdir -p work
-zcat articles.gz | head -20 > work/articles
-# zcat articles.gz > work/articles
+#zcat articles.gz | head -20 > work/articles
+zcat articles.gz > work/articles
 cat work/articles | sed s/.html$//g | tr -s '_()-,' ' ' | tr '[:upper:]' '[:lower:]' > work/articles.clean
 
 echo "> Anazyle titles"

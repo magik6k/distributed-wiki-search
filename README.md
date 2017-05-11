@@ -82,7 +82,7 @@ cases where typing exact article name won't yield it as first result.
 ## Building client
 
 1. Direct build of js client requires hacky setup
-2. Get js bundle from https://ipfs.io/ipfs/QmRMQAj9x6ee8cnKnhxm2nYfYwnzTqsR49hDsQG8DQ8vLx/
+2. Get js bundle from https://ipfs.io/ipfs/QmSoAZzmbY9VHcDCphM2ebsCcBiT2Q4N6kx8YJMHkbN38J/
 3. Adapt js bootstrap to your needs (the one in index.html)
 
 ## License
