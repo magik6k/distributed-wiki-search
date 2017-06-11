@@ -44,7 +44,7 @@ else: [A3: 0.3333..., A4: 0.6666...]
 
 When a search is performed, a similar action is performed. The query is
 split into words and weights for each of them are calculated.
-Then link arrays are queried and a candidate map (article, revelance)
+Then link arrays are queried and a candidate map (article, relevance)
 is created. Each entry queried from dict is multiplied by weight of
 word by which it was queried.
 
@@ -52,13 +52,13 @@ Search:
 ```
 some: [some: 1.0]
 
-A3: 0.5 * 1.0 = 0.5 = most revelant
+A3: 0.5 * 1.0 = 0.5 = most relevant
 A1: 0.25 * 1.0 = 0.25
 A2: 0.25 * 1.0 = 0.25
 ----
 some thin: [some: 0.5, thin: 0.5]
 
-A1: 0.25(some) * 0.5 + 1.0(thin) * 0.5 = 0.625 = most revelant
+A1: 0.25(some) * 0.5 + 1.0(thin) * 0.5 = 0.625 = most relevant
 A3: 0.5 * 0.5 = 0.25
 A2: 0.25 * 0.5 = 0.125
 ```
